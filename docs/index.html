@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mingo Risk Monitor</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header><div><p class="eyebrow">MACRO × AI / DAILY MONITOR</p><h1>RISK LEVEL <span id="level">—</span></h1><p id="asof">검증 데이터 로딩 중</p></div><div class="legend"><span class="g">G 양호</span><span class="a">A 경계</span><span class="r">R 위험</span><span class="b">B 미검증</span></div></header>
+    <section class="hero">
+      <article class="panel gauge"><h2>종합 위험 부담</h2><div class="dial"><div><strong id="score">—</strong><small>/ 100</small></div></div><div class="axis"><span>매크로</span><b id="macro">—</b><span>AI</span><b id="ai">—</b></div><p class="coverage" id="coverage"></p></article>
+      <article class="panel"><h2>종합 추이 <small>선이 올라갈수록 위험</small></h2><svg id="chart" viewBox="0 0 800 270" role="img" aria-label="위험 점수 추이"></svg><div class="bands"><span>0–20 매우 안전</span><span>20–35 안전</span><span>35–55 주의</span><span>55–70 위험</span><span>70–100 위기</span></div></article>
+    </section>
+    <section class="panel notice"><strong>판정 원칙</strong> 공식 자료가 수집되고 공개 임계값으로 재현될 때만 G/A/R입니다. 실패·정성·미검증은 B이며 점수에서 제외되고 확인률에 반영됩니다.</section>
+    <section class="grids"><article><h2>매크로단 11항목</h2><div id="macro-grid" class="cards"></div></article><article><h2>AI단 11항목</h2><div id="ai-grid" class="cards"></div></article></section>
+    <footer>초기 2026-10-14의 54.5 / 59 / 50은 참고 스냅샷이며 이 라이브 화면과 점수 이력에 포함되지 않습니다.</footer>
+  </main><script src="app.js"></script>
+</body></html>
+
+
