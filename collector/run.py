@@ -4,6 +4,7 @@ import argparse
 import json
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from .engine import evaluate, make_snapshot, write_snapshot
 
@@ -11,7 +12,7 @@ from .engine import evaluate, make_snapshot, write_snapshot
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixture", type=Path)
-    parser.add_argument("--date", default=datetime.now().astimezone().date().isoformat())
+    parser.add_argument("--date", default=datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat())
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     config = json.loads((root / "config" / "indicators.json").read_text(encoding="utf-8"))
@@ -24,5 +25,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 

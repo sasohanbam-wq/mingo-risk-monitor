@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from collector.engine import burden, classify
+from collector.run import ZoneInfo
 
 
 class EngineTests(unittest.TestCase):
@@ -33,6 +34,9 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(len({item["id"] for item in indicators}), 22)
         self.assertTrue(all(item["mode"] == "automatic" for item in indicators))
         self.assertTrue(all(item.get("proxy") and item.get("limitation") for item in indicators))
+
+    def test_runner_uses_korean_calendar_day(self):
+        self.assertEqual(str(ZoneInfo("Asia/Seoul")), "Asia/Seoul")
 
 
 if __name__ == "__main__":
