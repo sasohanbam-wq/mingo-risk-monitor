@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "kind": "reference_snapshot",
+  "as_of": "2026-10-14",
+  "overall": 54.5,
+  "macro": 59,
+  "ai": 50,
+  "live_calculation": false,
+  "excluded_from_history": true,
+  "note": "PDF/참조 이미지에서 옮긴 초기 스냅샷. 자동 수집 실측값이 아니며 라이브 데이터와 혼합하지 않는다."
+}
+
+
