@@ -4,14 +4,17 @@ import csv
 import io
 import json
 import math
+import statistics
 import urllib.request
+import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 
-USER_AGENT = "mingo-risk-monitor/1.0 contact: github-actions"
+USER_AGENT = "mingo-risk-monitor/1.0 https://github.com/sasohanbam-wq/mingo-risk-monitor"
 
 
 @dataclass
@@ -28,25 +31,147 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+@lru_cache(maxsize=128)
 def fetch_text(url: str, timeout: int = 20) -> str:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read().decode("utf-8")
 
 
+def fred_rows(series: str) -> list[tuple[str, float]]:
+    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
+    rows = list(csv.DictReader(io.StringIO(fetch_text(url))))
+    result = []
+    for row in rows:
+        raw = row.get(series)
+        if raw not in (None, "", "."):
+            result.append((row.get("DATE", row.get("observation_date", "")), float(raw)))
+    if not result:
+        raise ValueError(f"no numeric observations for {series}")
+    return result
+
+
+def fred_value(source: dict[str, Any]) -> tuple[float, str]:
+    rows = fred_rows(source["series"])
+    transform = source.get("transform", "latest")
+    periods = int(source.get("periods", 1))
+    if transform == "latest":
+        return rows[-1][1], rows[-1][0]
+    if transform == "pct_change":
+        if len(rows) <= periods:
+            raise ValueError("insufficient history for percent change")
+        return (rows[-1][1] / rows[-1 - periods][1] - 1) * 100, rows[-1][0]
+    if transform == "delta":
+        if len(rows) <= periods:
+            raise ValueError("insufficient history for delta")
+        return rows[-1][1] - rows[-1 - periods][1], rows[-1][0]
+    other = fred_rows(source["secondary_series"])
+    if transform == "spread":
+        scale = float(source.get("scale", 1))
+        return (rows[-1][1] - other[-1][1]) * scale, min(rows[-1][0], other[-1][0])
+    if transform == "correlation":
+        by_date_a = dict(rows)
+        by_date_b = dict(other)
+        common = sorted(set(by_date_a) & set(by_date_b))[-int(source.get("window", 60)) - 1:]
+        if len(common) < 20:
+            raise ValueError("insufficient aligned observations")
+        a = [by_date_a[d] for d in common]
+        b = [by_date_b[d] for d in common]
+        ar = [(a[i] / a[i - 1] - 1) * 100 for i in range(1, len(a))]
+        bd = [b[i] - b[i - 1] for i in range(1, len(b))]
+        return statistics.correlation(ar, bd), common[-1]
+    raise ValueError(f"unsupported FRED transform: {transform}")
+
+
+def annual_facts(companyfacts: dict[str, Any], concepts: list[str]) -> list[dict[str, Any]]:
+    facts = companyfacts.get("facts", {}).get("us-gaap", {})
+    candidates = []
+    for concept in concepts:
+        for fact in facts.get(concept, {}).get("units", {}).get("USD", []):
+            if fact.get("form") == "10-K" and fact.get("fp") == "FY" and isinstance(fact.get("val"), (int, float)):
+                start, end = fact.get("start"), fact.get("end")
+                if start and end:
+                    candidates.append(fact)
+    dedup: dict[tuple[str, str], dict[str, Any]] = {}
+    for fact in candidates:
+        key = (fact["start"], fact["end"])
+        if key not in dedup or fact.get("filed", "") > dedup[key].get("filed", ""):
+            dedup[key] = fact
+    return sorted(dedup.values(), key=lambda x: (x["end"], x.get("filed", "")))
+
+
+def instant_facts(companyfacts: dict[str, Any], concepts: list[str]) -> list[dict[str, Any]]:
+    facts = companyfacts.get("facts", {}).get("us-gaap", {})
+    candidates = []
+    for concept in concepts:
+        for fact in facts.get(concept, {}).get("units", {}).get("USD", []):
+            if fact.get("form") in ("10-Q", "10-K") and isinstance(fact.get("val"), (int, float)) and fact.get("end"):
+                candidates.append(fact)
+    dedup: dict[str, dict[str, Any]] = {}
+    for fact in candidates:
+        end = fact["end"]
+        if end not in dedup or fact.get("filed", "") > dedup[end].get("filed", ""):
+            dedup[end] = fact
+    return sorted(dedup.values(), key=lambda x: (x["end"], x.get("filed", "")))
+
+
+def sec_formula_value(source: dict[str, Any]) -> tuple[float, str]:
+    numerator = source["numerator"]
+    denominator = source["denominator"]
+    numerator_period = source.get("numerator_period", source.get("period", "annual"))
+    denominator_period = source.get("denominator_period", source.get("period", "annual"))
+    total_num = total_den = 0.0
+    observed = []
+    used = 0
+    for cik in source["ciks"]:
+        payload = json.loads(fetch_text(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{int(cik):010d}.json"))
+        get_num = annual_facts if numerator_period == "annual" else instant_facts
+        get_den = annual_facts if denominator_period == "annual" else instant_facts
+        nums, dens = get_num(payload, numerator), get_den(payload, denominator)
+        if not nums or not dens:
+            continue
+        num, den = nums[-1], dens[-1]
+        if den["val"] == 0:
+            continue
+        total_num += float(num["val"])
+        total_den += float(den["val"])
+        observed.append(min(num["end"], den["end"]))
+        used += 1
+    minimum = int(source.get("minimum_companies", len(source["ciks"])))
+    if used < minimum or total_den == 0:
+        raise ValueError(f"only {used}/{len(source['ciks'])} companies had comparable facts")
+    return total_num / total_den * float(source.get("scale", 100)), min(observed)
+
+
+def sec_efts_count(source: dict[str, Any]) -> tuple[float, str]:
+    today = datetime.now(timezone.utc).date()
+    start = today.fromordinal(today.toordinal() - int(source.get("days", 90)))
+    params = urllib.parse.urlencode({
+        "q": source["query"], "forms": source.get("forms", "S-1,S-1/A"),
+        "startdt": start.isoformat(), "enddt": today.isoformat(), "from": 0, "size": 1,
+    })
+    payload = json.loads(fetch_text(f"https://efts.sec.gov/LATEST/search-index?{params}"))
+    total = payload.get("hits", {}).get("total", {})
+    value = total.get("value") if isinstance(total, dict) else total
+    if not isinstance(value, (int, float)):
+        raise ValueError("SEC EFTS total missing")
+    return float(value), today.isoformat()
+
+
 def collect(source: dict[str, Any]) -> Observation:
     fetched_at = utc_now()
     url = source["url"]
     try:
+        if source["type"] in ("fred_csv", "fred"):
+            value, observed_at = fred_value(source)
+            return Observation(value, observed_at, fetched_at, url, True)
+        if source["type"] == "sec_formula":
+            value, observed_at = sec_formula_value(source)
+            return Observation(value, observed_at, fetched_at, url, True)
+        if source["type"] == "sec_efts_count":
+            value, observed_at = sec_efts_count(source)
+            return Observation(value, observed_at, fetched_at, url, True)
         body = fetch_text(url)
-        if source["type"] == "fred_csv":
-            rows = list(csv.DictReader(io.StringIO(body)))
-            value_key = source["series"]
-            valid = [r for r in rows if r.get(value_key) not in (None, "", ".")]
-            if not valid:
-                raise ValueError("no numeric observations")
-            row = valid[-1]
-            return Observation(float(row[value_key]), row.get("DATE", row.get("observation_date")), fetched_at, url, True)
         if source["type"] == "json_path":
             payload: Any = json.loads(body)
             for part in source["path"]:
@@ -103,6 +228,7 @@ def evaluate(config: dict[str, Any], fixture: dict[str, Any] | None = None) -> l
             "value": obs.value, "unit": item.get("unit"), "observed_at": obs.observed_at,
             "fetched_at": obs.fetched_at, "source_url": obs.source_url, "source_name": item["source"]["name"],
             "verified": obs.verified and status != "B", "reason": reason, "error": obs.error,
+            "proxy": item.get("proxy"), "limitation": item.get("limitation"),
         })
     return results
 
@@ -135,5 +261,4 @@ def write_snapshot(root: Path, snapshot: dict[str, Any]) -> None:
         if data.get("kind") == "live_observation":
             history.append({"as_of": data["as_of"], "overall": data["summary"]["overall"]["score"], "macro": data["summary"]["macro"]["score"], "ai": data["summary"]["ai"]["score"], "coverage": data["summary"]["overall"]["coverage"]})
     (root / "docs" / "data" / "history.json").write_text(json.dumps(history, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
 

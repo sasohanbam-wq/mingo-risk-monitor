@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Mingo Risk Monitor</title><link rel="stylesheet" href="styles.css">
+  <style>.proxy,.limit{margin:8px 0 0;color:#b9c4d2;font-size:13px}.proxy b{color:#7db7ff}.limit b{color:#d3ad48}.error{margin-top:10px;padding:8px 10px;background:#381d1d;color:#ffaaa2;border-radius:6px;font-size:12px}</style>
 </head>
 <body>
   <main>
@@ -11,10 +12,9 @@
       <article class="panel gauge"><h2>종합 위험 부담</h2><div class="dial"><div><strong id="score">—</strong><small>/ 100</small></div></div><div class="axis"><span>매크로</span><b id="macro">—</b><span>AI</span><b id="ai">—</b></div><p class="coverage" id="coverage"></p></article>
       <article class="panel"><h2>종합 추이 <small>선이 올라갈수록 위험</small></h2><svg id="chart" viewBox="0 0 800 270" role="img" aria-label="위험 점수 추이"></svg><div class="bands"><span>0–20 매우 안전</span><span>20–35 안전</span><span>35–55 주의</span><span>55–70 위험</span><span>70–100 위기</span></div></article>
     </section>
-    <section class="panel notice"><strong>판정 원칙</strong> 공식 자료가 수집되고 공개 임계값으로 재현될 때만 G/A/R입니다. 실패·정성·미검증은 B이며 점수에서 제외되고 확인률에 반영됩니다.</section>
+    <section class="panel notice"><strong>판정 원칙</strong> 22개 항목 모두 공식 자료의 공개 임계값으로 판정합니다. 직접 측정이 어려운 정성 항목은 명시된 운영 대리변수로 판단하며, 실제 수집 실패 때만 B로 제외합니다.</section>
     <section class="grids"><article><h2>매크로단 11항목</h2><div id="macro-grid" class="cards"></div></article><article><h2>AI단 11항목</h2><div id="ai-grid" class="cards"></div></article></section>
     <footer>초기 2026-10-14의 54.5 / 59 / 50은 참고 스냅샷이며 이 라이브 화면과 점수 이력에 포함되지 않습니다.</footer>
   </main><script src="app.js"></script>
 </body></html>
-
 

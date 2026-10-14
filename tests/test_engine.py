@@ -1,4 +1,6 @@
+import json
 import unittest
+from pathlib import Path
 
 from collector.engine import burden, classify
 
@@ -23,6 +25,14 @@ class EngineTests(unittest.TestCase):
         ]
         history = [row for row in snapshots if row.get("kind") == "live_observation"]
         self.assertEqual([row["as_of"] for row in history], ["2026-10-15"])
+
+    def test_all_22_indicators_are_automatic_and_documented(self):
+        path = Path(__file__).parents[1] / "config" / "indicators.json"
+        indicators = json.loads(path.read_text(encoding="utf-8"))["indicators"]
+        self.assertEqual(len(indicators), 22)
+        self.assertEqual(len({item["id"] for item in indicators}), 22)
+        self.assertTrue(all(item["mode"] == "automatic" for item in indicators))
+        self.assertTrue(all(item.get("proxy") and item.get("limitation") for item in indicators))
 
 
 if __name__ == "__main__":
