@@ -1,0 +1,30 @@
+{
+  "methodology": "G=0, A=1, R=2. B is excluded. Burden is the verified mean scaled to 0-100; coverage is always shown.",
+  "indicators": [
+    {"id":"macro-inflation","axis":"macro","title":"물가·글로벌 금리","mode":"automatic","unit":"%","source":{"name":"FRED - 5Y Breakeven Inflation","url":"https://fred.stlouisfed.org/graph/fredgraph.csv?id=T5YIE","type":"fred_csv","series":"T5YIE"},"rule":{"direction":"higher_is_worse","amber":2.5,"red":3.0}},
+    {"id":"macro-fed-path","axis":"macro","title":"연준 경로·내부 분화","mode":"automatic","unit":"%","source":{"name":"Federal Reserve Bank of New York - EFFR","url":"https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR","type":"fred_csv","series":"EFFR"},"rule":{"direction":"higher_is_worse","amber":4.5,"red":5.25}},
+    {"id":"macro-long-rate","axis":"macro","title":"장기금리·기간 프리미엄","mode":"automatic","unit":"%","source":{"name":"U.S. Treasury 10-Year Constant Maturity via FRED","url":"https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10","type":"fred_csv","series":"DGS10"},"rule":{"direction":"higher_is_worse","amber":4.5,"red":5.0}},
+    {"id":"macro-credit","axis":"macro","title":"약한 기업의 신용","mode":"automatic","unit":"%","source":{"name":"ICE BofA US High Yield OAS via FRED","url":"https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2","type":"fred_csv","series":"BAMLH0A0HYM2"},"rule":{"direction":"higher_is_worse","amber":4.0,"red":6.0}},
+    {"id":"macro-auction","axis":"macro","title":"국채 발행·매수 수요","mode":"manual","source":{"name":"U.S. Treasury - Auction Query","url":"https://www.treasurydirect.gov/auctions/announcements-data-results/"}},
+    {"id":"macro-funding","axis":"macro","title":"만기 자금·단기시장","mode":"automatic","unit":"%","source":{"name":"Federal Reserve Bank of New York - SOFR","url":"https://fred.stlouisfed.org/graph/fredgraph.csv?id=SOFR","type":"fred_csv","series":"SOFR"},"rule":{"direction":"higher_is_worse","amber":5.25,"red":6.0}},
+    {"id":"macro-geopolitics","axis":"macro","title":"전쟁·지정학","mode":"manual","source":{"name":"U.S. Department of State","url":"https://www.state.gov/press-releases/"}},
+    {"id":"macro-sovereign","axis":"macro","title":"국가 채권·재정","mode":"manual","source":{"name":"U.S. Treasury Fiscal Data","url":"https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/debt-to-the-penny"}},
+    {"id":"macro-energy","axis":"macro","title":"에너지·유가 정치","mode":"automatic","unit":"USD/bbl","source":{"name":"U.S. EIA - WTI Spot Price via FRED","url":"https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILWTICO","type":"fred_csv","series":"DCOILWTICO"},"rule":{"direction":"higher_is_worse","amber":95,"red":120}},
+    {"id":"macro-fx","axis":"macro","title":"환율·자금 흐름","mode":"automatic","unit":"index","source":{"name":"Federal Reserve Broad Dollar Index via FRED","url":"https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS","type":"fred_csv","series":"DTWEXBGS"},"rule":{"direction":"higher_is_worse","amber":125,"red":132}},
+    {"id":"macro-risk-assets","axis":"macro","title":"안전·위험자산 온도","mode":"automatic","unit":"index","source":{"name":"CBOE VIX via FRED","url":"https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS","type":"fred_csv","series":"VIXCLS"},"rule":{"direction":"higher_is_worse","amber":25,"red":35}},
+
+    {"id":"ai-china-memory","axis":"ai","title":"중국 메모리 공급 위협","mode":"manual","source":{"name":"U.S. BIS - Entity List","url":"https://www.bis.gov/regulations/ear/744"}},
+    {"id":"ai-customer-funding","axis":"ai","title":"AI 고객의 투자자금","mode":"manual","source":{"name":"SEC EDGAR Company Filings","url":"https://www.sec.gov/edgar/search/"}},
+    {"id":"ai-operating-cash","axis":"ai","title":"본업 현금으로 투자하나","mode":"manual","source":{"name":"SEC EDGAR XBRL APIs","url":"https://www.sec.gov/search-filings/edgar-application-programming-interfaces"}},
+    {"id":"ai-profitability","axis":"ai","title":"실제로 돈을 버나","mode":"manual","source":{"name":"SEC EDGAR XBRL APIs","url":"https://www.sec.gov/search-filings/edgar-application-programming-interfaces"}},
+    {"id":"ai-circularity","axis":"ai","title":"실사용·순환거래","mode":"manual","source":{"name":"SEC EDGAR Full Text Search","url":"https://efts.sec.gov/LATEST/search-index"}},
+    {"id":"ai-roi","axis":"ai","title":"투자비 회수(ROI)","mode":"manual","source":{"name":"SEC EDGAR Company Filings","url":"https://www.sec.gov/edgar/search/"}},
+    {"id":"ai-rate-cross","axis":"ai","title":"교차축: AI ↔ 금리","mode":"manual","source":{"name":"Federal Reserve - FOMC","url":"https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"}},
+    {"id":"ai-physical","axis":"ai","title":"물리 실행·입지","mode":"manual","source":{"name":"U.S. EIA - Electricity Data","url":"https://www.eia.gov/electricity/data.php"}},
+    {"id":"ai-accounting","axis":"ai","title":"회계 품질·숨은 부채","mode":"manual","source":{"name":"SEC EDGAR XBRL APIs","url":"https://www.sec.gov/search-filings/edgar-application-programming-interfaces"}},
+    {"id":"ai-ipo","axis":"ai","title":"대형 IPO 시계","mode":"manual","source":{"name":"SEC EDGAR - Registration Statements","url":"https://www.sec.gov/edgar/search/"}},
+    {"id":"ai-supply-demand","axis":"ai","title":"수요·공급 밸런스","mode":"manual","source":{"name":"SEC EDGAR Company Filings","url":"https://www.sec.gov/edgar/search/"}}
+  ]
+}
+
+
