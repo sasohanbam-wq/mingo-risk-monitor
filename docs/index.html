@@ -1,20 +1,87 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Mingo Risk Monitor</title><link rel="stylesheet" href="styles.css">
-  <style>.proxy,.limit{margin:8px 0 0;color:#b9c4d2;font-size:13px}.proxy b{color:#7db7ff}.limit b{color:#d3ad48}.error{margin-top:10px;padding:8px 10px;background:#381d1d;color:#ffaaa2;border-radius:6px;font-size:12px}</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="매크로 × AI 직접 추적 체크리스트와 자동 프록시 모니터">
+  <title>Mingo Risk Monitor</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>.line-chart{width:100%;height:210px}.line{fill:none;stroke-width:3}.rate-line{stroke:#4c8fd0}.sox-line{stroke:#e65349}.rate-text{fill:#70afe9;font-size:12px;font-weight:800}.sox-text{fill:#ff786d;font-size:12px;font-weight:800}.chart-note{margin:4px 0 0;color:#8f9bac;font-size:12px}.glossary-section{margin-top:16px}.glossary-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.glossary-grid>div{display:grid;grid-template-columns:145px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid #27313d}.glossary-grid b{color:#dce4ee}.glossary-grid span{color:#aeb8c6}@media(max-width:980px){.glossary-grid{grid-template-columns:1fr}}@media(max-width:600px){.glossary-grid>div{grid-template-columns:1fr}}</style>
 </head>
 <body>
   <main>
-    <header><div><p class="eyebrow">MACRO × AI / DAILY MONITOR</p><h1>RISK LEVEL <span id="level">—</span></h1><p id="asof">검증 데이터 로딩 중</p></div><div class="legend"><span class="g">G 양호</span><span class="a">A 경계</span><span class="r">R 위험</span><span class="b">B 미검증</span></div></header>
-    <section class="hero">
-      <article class="panel gauge"><h2>종합 위험 부담</h2><div class="dial"><div><strong id="score">—</strong><small>/ 100</small></div></div><div class="axis"><span>매크로</span><b id="macro">—</b><span>AI</span><b id="ai">—</b></div><p class="coverage" id="coverage"></p></article>
-      <article class="panel"><h2>종합 추이 <small>선이 올라갈수록 위험</small></h2><svg id="chart" viewBox="0 0 800 270" role="img" aria-label="위험 점수 추이"></svg><div class="bands"><span>0–20 매우 안전</span><span>20–35 안전</span><span>35–55 주의</span><span>55–70 위험</span><span>70–100 위기</span></div></article>
-    </section>
-    <section class="panel notice"><strong>판정 원칙</strong> 22개 항목 모두 공식 자료의 공개 임계값으로 판정합니다. 직접 측정이 어려운 정성 항목은 명시된 운영 대리변수로 판단하며, 실제 수집 실패 때만 B로 제외합니다.</section>
-    <section class="grids"><article><h2>매크로단 11항목</h2><div id="macro-grid" class="cards"></div></article><article><h2>AI단 11항목</h2><div id="ai-grid" class="cards"></div></article></section>
-    <footer>초기 2026-10-14의 54.5 / 59 / 50은 참고 스냅샷이며 이 라이브 화면과 점수 이력에 포함되지 않습니다.</footer>
-  </main><script src="app.js"></script>
-</body></html>
+    <header class="topbar">
+      <div>
+        <div class="title-row"><h1>RISK LEVEL <span id="level">3</span></h1><span class="level-badge" id="level-label">주의 · 상</span></div>
+        <p class="subtitle">매크로 × AI 리스크 지수 — 직접 추적 체크리스트 연동</p>
+        <p class="asof" id="asof">원본 판정 불러오는 중</p>
+      </div>
+      <div class="legend"><span class="g">G 양호</span><span class="a">A 경계</span><span class="r">R 위험</span><span class="b">B 보류</span></div>
+    </header>
+    <nav class="mode-tabs" aria-label="지수 구분">
+      <button class="tab active" data-target="original">원본 체크리스트</button>
+      <button class="tab" data-target="automatic">자동 프록시 보조지표</button>
+    </nav>
+    <div id="original-view">
+      <section class="hero">
+        <article class="panel gauge-panel">
+          <div class="section-kicker">종합 위험점수</div>
+          <div class="gauge"><div class="gauge-hole"><strong id="score">54.5</strong><span>/ 100 · 종합 상태 부담</span></div></div>
+          <div class="axis-row"><b>매크로단</b><div class="bar"><i id="macro-bar"></i></div><strong id="macro-score">59</strong><span id="macro-counts">G1 · A7 · R3</span></div>
+          <div class="axis-row"><b>AI단</b><div class="bar"><i id="ai-bar"></i></div><strong id="ai-score">50</strong><span id="ai-counts">G1 · A9 · R1</span></div>
+          <div class="risk-scale"><span>1 위기 70~100</span><span>2 위험 55~70</span><span class="active">3 주의 35~55</span><span>4 안전 20~35</span><span>5 매우 안전 0~20</span></div>
+        </article>
+        <article class="panel trend-panel">
+          <div class="section-kicker">종합점수 추이</div>
+          <p class="panel-note">갱신 때마다 점이 쌓입니다. 선 위로 올라갈수록 위험합니다.</p>
+          <svg id="reference-chart" viewBox="0 0 800 300" role="img" aria-label="원본 위험 점수 추이"></svg>
+          <div class="watchline">상태는 매크로가 더 무겁다(59 vs 50) — 가격은 AI를 더 때리는 중</div>
+        </article>
+      </section>
+      <section class="panel price-section">
+        <div class="section-title"><span>0. 가격 반응 보드</span><small>상태 점검과 분리 · 주간 갱신</small></div>
+        <div class="price-grid"><div id="macro-price"></div><div id="ai-price"></div></div>
+        <div class="divergence" id="divergence"></div>
+      </section>
+      <section class="panel board-section">
+        <div class="section-title"><span>0-2. 한눈 판정 보드</span><small>22항목 전체 · 세부 근거는 각 카드</small></div>
+        <div class="status-columns"><div><h2>매크로단 11항목</h2><div id="macro-board" class="status-board"></div></div><div><h2>AI단 11항목</h2><div id="ai-board" class="status-board"></div></div></div>
+      </section>
+      <section class="panel charts-section">
+        <div class="section-title"><span>0-3. 핵심 실측</span><small>인상확률 · 자금 흐름 · 국가 CDS</small></div>
+        <div class="mini-charts">
+          <article class="wide"><h3>괴리 실측 — 미 10Y vs SOX</h3><svg id="rate-sox-chart" class="line-chart" viewBox="0 0 760 210" role="img" aria-label="미국 10년 금리와 SOX 괴리"></svg><p id="rate-sox-note" class="chart-note"></p></article>
+          <article><h3>FedWatch 10월 인상확률</h3><div id="fedwatch-chart" class="bar-chart"></div></article>
+          <article><h3>국가 ETF 자금 흐름 (6개월)</h3><div id="etf-chart" class="bar-chart"></div></article>
+          <article class="wide"><h3>유럽 국채 CDS 1개월 변화율</h3><div id="cds-chart" class="bar-chart horizontal"></div></article>
+        </div>
+      </section>
+      <section class="detail-section">
+        <div class="section-title"><span>상태 점검 22항목</span><small>확인요소 · 기록된 상태 · 완화/강화 조건</small></div>
+        <div class="detail-columns"><div><h2>매크로단</h2><div id="macro-details"></div></div><div><h2>AI단</h2><div id="ai-details"></div></div></div>
+      </section>
+      <section class="panel korea-section">
+        <div class="section-title"><span>보조축 — 한국 디스카운트</span><small>부담률 집계 미포함 · 참고 추적</small></div>
+        <div id="korea-card"></div>
+      </section>
+      <section class="panel glossary-section">
+        <div class="section-title"><span>용어 풀이</span><small>처음 보는 분을 위한 핵심 개념</small></div>
+        <div id="glossary" class="glossary-grid"></div>
+      </section>
+      <section class="method-note"><b>산출 방법</b> 각 항목 G=0점, A=1점, R=2점으로 환산해 100점 만점으로 표시합니다. 이 화면의 54.5는 PDF 작성자의 2026-10-14 원본 판정 스냅샷이며 자동 계산값이 아닙니다.</section>
+    </div>
+    <div id="automatic-view" hidden>
+      <section class="panel auto-summary">
+        <div class="section-title"><span>자동 프록시 보조지표</span><small>원본 지수와 별도 · 매일 09:00 KST</small></div>
+        <div class="auto-numbers"><div><span>종합</span><strong id="auto-overall">—</strong></div><div><span>매크로</span><strong id="auto-macro">—</strong></div><div><span>AI</span><strong id="auto-ai">—</strong></div><div><span>검증률</span><strong id="auto-coverage">—</strong></div></div>
+        <p id="auto-asof" class="asof"></p>
+        <div class="warning-box">이 수치는 주문·금리·재고 등 공식 통계 대리변수의 정량 결과입니다. PDF 작성자의 정성 판정 54.5와 직접 비교하거나 대체하지 않습니다.</div>
+      </section>
+      <section class="auto-columns"><div><h2>매크로 자동지표</h2><div id="auto-macro-cards"></div></div><div><h2>AI 자동지표</h2><div id="auto-ai-cards"></div></div></section>
+    </div>
+    <footer>원본 체크리스트와 자동 프록시는 서로 다른 모델입니다. 출처·날짜·미확인 항목을 카드별로 확인하세요.</footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
 

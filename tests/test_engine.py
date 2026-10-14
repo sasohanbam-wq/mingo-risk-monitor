@@ -38,6 +38,18 @@ class EngineTests(unittest.TestCase):
     def test_runner_uses_korean_calendar_day(self):
         self.assertEqual(str(ZoneInfo("Asia/Seoul")), "Asia/Seoul")
 
+    def test_pdf_checklist_snapshot_is_complete_and_reconciles(self):
+        path = Path(__file__).parents[1] / "docs" / "data" / "checklist.json"
+        snapshot = json.loads(path.read_text(encoding="utf-8"))
+        items = snapshot["items"]
+        self.assertEqual(len(items), 22)
+        self.assertEqual(len([x for x in items if x["axis"] == "macro"]), 11)
+        self.assertEqual(len([x for x in items if x["axis"] == "ai"]), 11)
+        points = {"G": 0, "A": 1, "R": 2}
+        overall = sum(points[x["status"]] for x in items) / (len(items) * 2) * 100
+        self.assertAlmostEqual(overall, 54.5, places=1)
+        self.assertTrue(all(x["checks"] and x["verdict"] and x["ease"] and x["escalate"] for x in items))
+
 
 if __name__ == "__main__":
     unittest.main()
