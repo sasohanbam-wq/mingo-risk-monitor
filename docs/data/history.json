@@ -54,5 +54,12 @@
     "macro": 22.7,
     "ai": 4.5,
     "coverage": 100.0
+  },
+  {
+    "as_of": "2026-10-22",
+    "overall": null,
+    "macro": null,
+    "ai": null,
+    "coverage": 0.0
   }
 ]
